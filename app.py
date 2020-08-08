@@ -17,27 +17,40 @@ def scrap(url):
     soup = BeautifulSoup(url_get.content,"html.parser")
     
     #Find the key to get the information
-    table = soup.find(___) 
-    tr = table.find_all(___) 
+    table = soup.find('table', attrs={'class': 'newsTable2'})
+    tr = table.find_all('tr') 
 
     temp = [] #initiating a tuple
 
     for i in range(1, len(tr)):
-        row = table.find_all('tr')[i]
-        #use the key to take information here
-        #name_of_object = row.find_all(...)[0].text
-
-
-
-
-
-
-        temp.append((___)) #append the needed information 
+        row = tr[i].find_all('td')
     
-    temp = temp[::-1] #remove the header
+        # get tanggal
+        tanggal = row[0].text.strip()
 
-    df = pd.DataFrame(temp, columns = (___)) #creating the dataframe
+        # get kurs jual
+        jual = row[1].text.strip()
+
+        # get kurs beli
+        beli = row[2].text.strip()
+
+        temp.append((tanggal, jual, beli)) # append the needed information
+
+    
+#     temp = temp[::-1] #remove the header
+
+    df = pd.DataFrame(temp, columns = ('Tanggal', 'KursJual', 'KursBeli')) #creating the dataframe
+    
    #data wranggling -  try to change the data type to right data type
+    df['KursJual'] = df['KursJual'].str.replace(',', '.').astype('float64')
+    df['KursBeli'] = df['KursBeli'].str.replace(',', '.').astype('float64')
+    
+    df['Tanggal'] = df['Tanggal'].str.replace('\xa0', ' ')
+    df['Tanggal'] = df['Tanggal'].str.lstrip('0')
+    df['Tanggal'] = df['Tanggal'].str.replace('Agustus', 'August')
+    df['Tanggal'] = df['Tanggal'].astype('datetime64')
+    
+    df = df.set_index('Tanggal')
 
    #end of data wranggling
 
@@ -45,7 +58,7 @@ def scrap(url):
 
 @app.route("/")
 def index():
-    df = scrap(___) #insert url here
+    df = scrap('https://news.mifx.com/kurs-valuta-asing?kurs=JPY') #insert url here
 
     #This part for rendering matplotlib
     fig = plt.figure(figsize=(5,2),dpi=300)
